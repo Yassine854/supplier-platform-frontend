@@ -16,6 +16,14 @@ import Alerts from './pages/UiElements/Alerts';
 import Buttons from './pages/UiElements/Buttons';
 import DefaultLayout from './layout/DefaultLayout';
 
+//suppliers
+import SupplierDashboard from './pages/suppliers/SupplierDashboard';
+
+//super_admin
+import SuperAdminDashboard from './pages/super_admin/AllSuppliersDashboard';
+import SupplierDashboard_sp from './pages/super_admin/SupplierDashboard';
+
+
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const { pathname } = useLocation();
@@ -48,7 +56,13 @@ function App() {
           element={
             <DefaultLayout>
               <Routes>
-                <Route index element={<ECommerce />} />
+              <Route path="/test"  element={<SupplierDashboard />} />
+              <Route index element={<SuperAdminDashboard />} />
+              <Route 
+                  path="/supplierDashboard/:supplierId"  
+                  element={<SupplierDashboard_sp />} 
+                />
+                {/* <Route path="/test" element={<ECommerce />} /> */}
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/forms/form-elements" element={<FormElements />} />

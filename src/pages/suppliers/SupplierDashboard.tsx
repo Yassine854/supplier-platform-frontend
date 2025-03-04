@@ -1,0 +1,326 @@
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import CardDataStats from "../../components/Charts/suppliers/CardDataStats";
+import {
+  FaClipboardList,
+  FaMoneyBillWave,
+  FaUsers,
+  FaUndo,
+} from "react-icons/fa";
+import axios from "axios";
+import ProductRevenueLossChart from "../../components/Charts/suppliers/ProductRevenueLossChart";
+import TopArticlesOrdered from "../../components/Charts/suppliers/TopArticlesOrdered";
+import SupplierAreaChart from "../../components/Charts/suppliers/SupplierAreaChart";
+import RegionsOrders from "../../components/Charts/suppliers/RegionsOrders";
+import AvailableProducts from "../../components/Charts/suppliers/AvailableProducts";
+import DatePicker from "react-datepicker";
+import ClientSegment from "../../components/Charts/suppliers/ClientSegment";
+import SupplierQuarterlyMetrics from "../../components/Charts/suppliers/SupplierQuarterlyMetrics";
+import SupplierCategoryPieChart from "../../components/Charts/suppliers/SupplierCategoryPieChart";
+import SupplierTopProductsChart from "../../components/Charts/suppliers/SupplierTopProductsChart";
+import InventoryTrendChart from "../../components/Charts/suppliers/InventoryTrendChart";
+import "react-datepicker/dist/react-datepicker.css";
+
+const supplierId = "27"; // Example supplier ID (e.g., Technofood)
+
+const SupplierDashboard = () => {
+  const [searchParams] = useSearchParams();
+  // const supplierId: string = searchParams.get("supplierId") ?? "";
+  const [startDate, setStartDate] = useState<Date | null>(null); // Default to null
+  const [endDate, setEndDate] = useState<Date | null>(null); // Default to null
+
+  const [appliedStartDate, setAppliedStartDate] = useState<Date | null>(null);
+  const [appliedEndDate, setAppliedEndDate] = useState<Date | null>(null);
+
+  const [categories, setCategories] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [supplier, setSupplier] = useState<any>(null);
+
+  useEffect(() => {
+    console.log(supplierId);
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/api/categories",
+        );
+        setCategories(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    const fetchSupplier = async () => {
+      try {
+        // Fetch all suppliers from the API
+        const response = await axios.get("http://localhost:3000/api/suppliers");
+        const foundSupplier = response.data.find(
+          (supplier: any) => supplier.manufacturer_id === Number(supplierId),
+        );
+
+        if (foundSupplier) {
+          setSupplier(foundSupplier);
+        } else {
+          console.error("Supplier not found");
+        }
+      } catch (error) {
+        console.error("Error fetching supplier:", error);
+      }
+    };
+
+    const fetchOrders = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/api/orders");
+        setOrders(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/api/products");
+        setProducts(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+    fetchSupplier();
+    fetchProducts();
+    fetchOrders();
+    fetchCategories();
+  }, [supplierId]);
+
+  const handleApplyFilters = () => {
+    // Only apply the current dates if they are not null
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
+  };
+
+  //Total orders
+  const supplierProducts = products.filter(
+    (p) => p.manufacturer === supplierId,
+  );
+  const supplierProductIds = new Set(supplierProducts.map((p) => p.product_id));
+
+  const totalValidOrders = orders.filter(
+    (order) =>
+      order.state != "canceled" &&
+      (!appliedStartDate || new Date(order.created_at) >= appliedStartDate) &&
+      (!appliedEndDate || new Date(order.created_at) <= appliedEndDate) &&
+      order.items.some((item: { product_id: number }) =>
+        supplierProductIds.has(item.product_id),
+      ),
+  ).length;
+
+  //Total unique customers
+  const uniqueCustomers = new Set<number>();
+  orders.forEach((order) => {
+    if (
+      order.state != "canceled" &&
+      (!appliedStartDate || new Date(order.created_at) >= appliedStartDate) &&
+      (!appliedEndDate || new Date(order.created_at) <= appliedEndDate) &&
+      order.items.some((item: { product_id: number }) =>
+        supplierProductIds.has(item.product_id),
+      )
+    ) {
+      if (order.customer_id) {
+        uniqueCustomers.add(order.customer_id);
+      }
+    }
+  });
+  const totalUniqueCustomers = uniqueCustomers.size;
+
+  //Total returned products
+  const totalReturns = orders
+    .filter(
+      (order) =>
+        order.state !== "canceled" &&
+        (!appliedStartDate || new Date(order.created_at) >= appliedStartDate) &&
+        (!appliedEndDate || new Date(order.created_at) <= appliedEndDate),
+    )
+    .flatMap((order) => order.items)
+    .filter(
+      (item) =>
+        supplierProductIds.has(item.product_id) && item.qty_refunded > 0,
+    )
+    .reduce((sum, item) => sum + item.qty_refunded, 0);
+
+  //Chiffre d'affaires
+  const totalTurnover = orders
+    .filter(
+      (order) =>
+        order.state !== "canceled" &&
+        (!appliedStartDate || new Date(order.created_at) >= appliedStartDate) &&
+        (!appliedEndDate || new Date(order.created_at) <= appliedEndDate),
+    )
+    .flatMap((order) => order.items)
+    .filter((item) => supplierProductIds.has(item.product_id))
+    .reduce((sum, item) => {
+      const product = products.find((p) => p.product_id === item.product_id);
+      return sum + item.qty_invoiced * (product?.cost || 0);
+    }, 0);
+
+  const handleStartDateChange = (date: Date | null) => {
+    setStartDate(date);
+    // Automatically clear the applied start date if input is cleared
+    if (date === null) {
+      setAppliedStartDate(null);
+    }
+  };
+
+  const handleEndDateChange = (date: Date | null) => {
+    setEndDate(date);
+    // Automatically clear the applied end date if input is cleared
+    if (date === null) {
+      setAppliedEndDate(null);
+    }
+  };
+  return (
+    <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-7.5">
+      {/* Filter Section */}
+      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div className="flex flex-col gap-4 md:flex-row">
+          <div className="w-full md:w-40">
+            <label className="mb-2 block text-sm font-medium text-black dark:text-white">
+              Date Début
+            </label>
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              dateFormat="yyyy/MM/dd"
+              className="w-full rounded-lg border border-stroke bg-white p-2.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white"
+              isClearable
+            />
+          </div>
+
+          <div className="w-full md:w-40">
+            <label className="mb-2 block text-sm font-medium text-black dark:text-white">
+              Date Fin
+            </label>
+            <DatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              dateFormat="yyyy/MM/dd"
+              className="w-full rounded-lg border border-stroke bg-white p-2.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white"
+              isClearable
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleApplyFilters}
+          className="flex items-center justify-center rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-opacity-90"
+        >
+          Appliquer Filtre
+        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
+        <CardDataStats
+          title="Chiffre d'affaires"
+          total={`${totalTurnover.toFixed(2)} TND`}
+        >
+          <FaMoneyBillWave className="fill-primary dark:fill-white" />
+        </CardDataStats>
+
+        <CardDataStats
+          title="Commandes"
+          total={totalValidOrders.toString()}
+        >
+          <FaClipboardList className="fill-primary dark:fill-white" />
+        </CardDataStats>
+
+        <CardDataStats
+          title="Clients Uniques"
+          total={totalUniqueCustomers.toString()}
+        >
+          <FaUsers className="fill-primary dark:fill-white" />
+        </CardDataStats>
+
+        <CardDataStats
+          title="Retours"
+          total={totalReturns.toString()}
+        >
+          <FaUndo className="fill-primary dark:fill-white" />
+        </CardDataStats>
+      </div>
+
+      {/* Charts Grid */}
+      <div className="mt-6 grid w-full grid-cols-1 gap-6">
+        {/* First Row */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <SupplierAreaChart supplierId={supplierId} />
+          </div>
+          <div className="mt-6 flex w-full justify-center">
+            <SupplierQuarterlyMetrics supplierId={supplierId} />
+          </div>
+        </div>
+
+        {/* Second Row */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="md:col-span-2 flex w-full justify-center">
+            <ProductRevenueLossChart supplierId={supplierId} />
+          </div>
+          <div className="flex w-full justify-center">
+            <AvailableProducts supplierId={supplierId} />
+          </div>
+        </div>
+
+        {/* Full Width Row */}
+        <div className="grid grid-cols-1">
+          <TopArticlesOrdered
+            supplierId={supplierId}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        </div>
+
+        {/* Dual Charts Row */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="flex w-full justify-center">
+            <SupplierCategoryPieChart
+              supplierId={supplierId}
+              startDate={startDate}
+              endDate={endDate}
+            />
+          </div>
+          <div className="flex w-full justify-center">
+            <ClientSegment
+              supplierId={supplierId}
+              startDate={startDate}
+              endDate={endDate}
+            />
+          </div>
+        </div>
+
+        {/* Map + Inventory Row */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <RegionsOrders supplierId={supplierId} />
+          </div>
+          <div className="flex w-full justify-center">
+            <InventoryTrendChart supplierId={supplierId} />
+          </div>
+        </div>
+
+        {/* Bottom Full Width Row */}
+        <div className="grid grid-cols-1">
+          <SupplierTopProductsChart
+            supplierId={supplierId}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export default SupplierDashboard;
