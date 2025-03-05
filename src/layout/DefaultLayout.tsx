@@ -1,80 +1,77 @@
-import React, { useState,useEffect, ReactNode } from 'react';
-
+import React, { useState, useEffect, ReactNode } from 'react';
 import Header from '../components/Header/index';
 import Sidebar from '../components/Sidebar/index';
 import axios from "axios";
 import Footer from "./footer";
 
+interface AuthData {
+  role: string;
+  user: {
+    username?: string;
+    company_name?: string;
+    email?: string;
+    contact_name?: string;
+    phone_number?: string;
+    city?: string;
+    postal_code?: string;
+  };
+}
+
 const DefaultLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  //Supplier Data testing
-  const supplierId = "27"; 
+  const [authData, setAuthData] = useState<AuthData | null>(null);
   const [supplier, setSupplier] = useState<any>(null);
-  
-
 
   useEffect(() => {
-
-
-    const fetchSupplier = async () => {
+    // Get authentication data
+    const storedAuth = localStorage.getItem('auth');
+    if (storedAuth) {
       try {
-        // Fetch all suppliers from the API
-        const response = await axios.get("http://localhost:3000/api/suppliers");
-        const foundSupplier = response.data.find(
-          (supplier: any) => supplier.manufacturer_id === Number(supplierId),
-        );
-
-        if (foundSupplier) {
-          setSupplier(foundSupplier);
-        } else {
-          console.error("Supplier not found");
+        const parsedAuth = JSON.parse(storedAuth);
+        setAuthData(parsedAuth);
+        
+        // Only fetch supplier data if user is a supplier
+        if (parsedAuth.role === 'supplier') {
+          const fetchSupplier = async () => {
+            try {
+              const response = await axios.get("http://localhost:3000/api/suppliers");
+              const foundSupplier = response.data.find(
+                (s: any) => s.manufacturer_id === parsedAuth.user.manufacturer_id
+              );
+              setSupplier(foundSupplier || null);
+            } catch (error) {
+              console.error("Error fetching supplier:", error);
+            }
+          };
+          fetchSupplier();
         }
       } catch (error) {
-        console.error("Error fetching supplier:", error);
+        console.error('Error parsing auth data:', error);
       }
-    };
-
-
-
-    fetchSupplier();
-
-  }, [supplierId]);
-
+    }
+  }, []);
 
   return (
     <div className="dark:bg-boxdark-2 dark:text-bodydark">
-      {/* <!-- ===== Page Wrapper Start ===== --> */}
       <div className="flex h-screen overflow-hidden">
-        {/* <!-- ===== Sidebar Start ===== --> */}
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-       
-        {/* <!-- ===== Sidebar End ===== --> */}
 
-        {/* <!-- ===== Content Area Start ===== --> */}
         <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-          {/* <!-- ===== Header Start ===== --> */}
           <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-          
-          {/* <!-- ===== Header End ===== --> */}
 
-          {/* <!-- ===== Main Content Start ===== --> */}
           <main>
             <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
               {children}
             </div>
-            <Footer supplier={supplier} />
+            
+            {/* Show footer only for suppliers */}
+            {authData?.role === 'supplier' && (
+              <Footer supplier={supplier} />
+            )}
           </main>
-          {/* <!-- ===== Main Content End ===== --> */}
         </div>
-        
-        {/* <!-- ===== Content Area End ===== --> */}
       </div>
-      
-      {/* <!-- ===== Page Wrapper End ===== --> */}
-      
     </div>
-    
   );
 };
 

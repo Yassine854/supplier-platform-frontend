@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
 
 import Loader from './common/Loader';
 import SignIn from './pages/Authentication/SignIn';
@@ -23,10 +23,31 @@ import SupplierDashboard from './pages/suppliers/SupplierDashboard';
 import SuperAdminDashboard from './pages/super_admin/AllSuppliersDashboard';
 import SupplierDashboard_sp from './pages/super_admin/SupplierDashboard';
 
+interface AuthData {
+  role: 'supplier' | 'superadmin' | null;
+  user: any;
+}
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const { pathname } = useLocation();
+  const [authData, setAuthData] = useState<AuthData>({ role: null, user: {} });
+
+  useEffect(() => {
+    const storedAuth = localStorage.getItem('auth');
+    if (storedAuth) {
+      try {
+        const parsedAuth = JSON.parse(storedAuth);
+        setAuthData({
+          role: parsedAuth.role || null,
+          user: parsedAuth.user || {}
+        });
+      } catch (error) {
+        console.error('Error parsing auth data:', error);
+      }
+    }
+    setLoading(false); // Immediately set loading to false after processing
+  }, [pathname]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -56,12 +77,16 @@ function App() {
           element={
             <DefaultLayout>
               <Routes>
-              <Route path="/test"  element={<SupplierDashboard />} />
-              <Route index element={<SuperAdminDashboard />} />
-              <Route 
-                  path="/supplierDashboard/:supplierId"  
-                  element={<SupplierDashboard_sp />} 
-                />
+              {authData.role === 'supplier' && (
+
+              <Route path="/supplier/dashboard"  element={<SupplierDashboard />} />
+            )}
+              {authData.role === 'superadmin' && (
+                    <>
+                      <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
+                      <Route path="/supplierDashboard/:supplierId" element={<SupplierDashboard_sp />} />
+                    </>
+                  )}
                 {/* <Route path="/test" element={<ECommerce />} /> */}
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/profile" element={<Profile />} />

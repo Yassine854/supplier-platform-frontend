@@ -7,8 +7,22 @@ interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (arg: boolean) => void;
 }
+interface AuthData {
+  role: string;
+  user: {
+    username?: string;
+    company_name?: string;
+    email?: string;
+    contact_name?: string;
+    phone_number?: string;
+    city?: string;
+    postal_code?: string;
+  };
+}
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
+  const [authData, setAuthData] = useState<AuthData | null>(null);
+
   const location = useLocation();
   const navigate = useNavigate();
   const { pathname } = location;
@@ -26,6 +40,17 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const [sidebarExpanded, setSidebarExpanded] = useState(
     storedSidebarExpanded === null ? false : storedSidebarExpanded === 'true',
   );
+
+  useEffect(() => {
+    const storedAuth = localStorage.getItem('auth');
+    if (storedAuth) {
+      try {
+        setAuthData(JSON.parse(storedAuth));
+      } catch (error) {
+        console.error('Error parsing auth data:', error);
+      }
+    }
+  }, []);
 
   // Close sidebar on click outside
   useEffect(() => {
@@ -123,9 +148,28 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       {/* <!-- SIDEBAR HEADER --> */}
       
       <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
-        <NavLink to="/">
-          <img src={Logo} alt="Logo" className="w-32 md:w-40 lg:w-48" />
-        </NavLink>
+      <NavLink 
+    to="/" 
+    className="group relative flex w-full items-center justify-center transition-transform duration-300 hover:scale-[1.02]"
+  >
+    <div className="relative rounded-lg p-2">
+      {/* Gradient background overlay */}
+      <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-gray-900/5 to-gray-900/0 opacity-50 transition-opacity duration-300 group-hover:opacity-70 dark:from-white/5 dark:to-white/0" />
+      
+      {/* Border animation */}
+      <div className="absolute inset-0 rounded-lg border-2 border-stroke/10 transition-all duration-500 group-hover:border-primary/30 dark:border-strokedark/20 dark:group-hover:border-primary/50" />
+      
+      {/* Logo with optimized contrast */}
+      <img 
+        src={Logo} 
+        alt="Kamioun Logo" 
+        className="relative z-10 w-32 drop-shadow-xl filter transition-all duration-300 md:w-40 lg:w-48 dark:brightness-125" 
+      />
+    </div>
+    
+    {/* Subtle glow effect */}
+    <div className="absolute -inset-2 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-100" />
+  </NavLink>
 
         <button
           ref={trigger}
@@ -168,8 +212,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
               {/* <!-- Menu Item Calendar --> */}
 
               <li>
+              {authData?.role === 'supplier' && (
                 <NavLink
-                  to="/"
+                  to="/supplier/dashboard"
                   className={({ isActive }) =>
                     'group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ' +
                     (isActive && '!text-white')
@@ -202,13 +247,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </svg>
                   Dashboard
                 </NavLink>
+                )}
               </li>
 
 
 
-              <SidebarLinkGroup
-                activeCondition={pathname.includes('/supplierDashboard')}
-              >
+              {authData?.role === 'superadmin' && (
+              <SidebarLinkGroup activeCondition={pathname.includes('/supplierDashboard')}>
                 {(handleClick, open) => (
                   <React.Fragment>
                     <NavLink
@@ -261,14 +306,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                       <div className="mt-4 mb-5.5 flex flex-col gap-2.5 pl-6 pr-4">
                         {/* Dashboard Link */}
                         <NavLink
-                          to="/supplierDashboard"
+                          to="/admin/dashboard"
                           className={({ isActive }) =>
                             `group relative flex items-center rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ${
                               isActive && '!text-white'
                             }`
                           }
                         >
-                          Suppliers Dashboard
+                          Dashboard
                         </NavLink>
 
                         {/* Search Input */}
@@ -322,7 +367,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </React.Fragment>
                 )}
               </SidebarLinkGroup>
-
+              )}
 
 
               {/* <!-- Menu Item Profile --> */}
@@ -378,7 +423,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                       fill=""
                     />
                   </svg>
-                  Profile
+                  Profil
                 </NavLink>
               </li>
 

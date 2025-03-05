@@ -21,7 +21,14 @@ import SupplierTopProductsChart from "../../components/Charts/suppliers/Supplier
 import InventoryTrendChart from "../../components/Charts/suppliers/InventoryTrendChart";
 import "react-datepicker/dist/react-datepicker.css";
 
-const supplierId = "27"; // Example supplier ID (e.g., Technofood)
+// const supplierId = "27"; // Example supplier ID (e.g., Technofood)
+
+interface AuthData {
+  role: string;
+  user: {
+    manufacturer_id?: number;
+  };
+}
 
 const SupplierDashboard = () => {
   const [searchParams] = useSearchParams();
@@ -36,6 +43,9 @@ const SupplierDashboard = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [supplier, setSupplier] = useState<any>(null);
+  const [supplierId, setSupplierId] = useState<string>("");
+
+
 
   useEffect(() => {
     console.log(supplierId);
@@ -50,6 +60,19 @@ const SupplierDashboard = () => {
         console.error("Error fetching categories:", error);
       }
     };
+
+
+    const storedAuth = localStorage.getItem('auth');
+    if (storedAuth) {
+      try {
+        const authData: AuthData = JSON.parse(storedAuth);
+        if (authData.role === 'supplier' && authData.user.manufacturer_id) {
+          setSupplierId(authData.user.manufacturer_id.toString());
+        }
+      } catch (error) {
+        console.error('Error parsing auth data:', error);
+      }
+    }
 
     const fetchSupplier = async () => {
       try {
