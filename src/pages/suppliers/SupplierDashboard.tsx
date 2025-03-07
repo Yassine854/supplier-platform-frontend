@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import CardDataStats from "../../components/Charts/suppliers/CardDataStats";
 import {
   FaClipboardList,
@@ -23,10 +23,17 @@ import "react-datepicker/dist/react-datepicker.css";
 
 // const supplierId = "27"; // Example supplier ID (e.g., Technofood)
 
-interface AuthData {
-  role: string;
+interface AuthResponse {
+  success: boolean;
+  token: string;
   user: {
-    manufacturer_id?: number;
+    role?: string;
+    username?: string;
+    company_name?: string;
+    manufacturerId?: string;
+    contact_name?: string;
+    city?: string;
+    postal_code?: string;
   };
 }
 
@@ -42,80 +49,71 @@ const SupplierDashboard = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [supplier, setSupplier] = useState<any>(null);
-  const [supplierId, setSupplierId] = useState<string>("");
+  const [supplierId, setSupplierId] = useState<any>(null);
+  const [customers, setCustomers] = useState<any>(null);
+  const [suppliers, setSuppliers] = useState<any>(null);
+  const navigate = useNavigate();
 
 
 
   useEffect(() => {
-    console.log(supplierId);
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:3000/api/categories",
-        );
-        setCategories(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-
-
-    const storedAuth = localStorage.getItem('auth');
-    if (storedAuth) {
-      try {
-        const authData: AuthData = JSON.parse(storedAuth);
-        if (authData.role === 'supplier' && authData.user.manufacturer_id) {
-          setSupplierId(authData.user.manufacturer_id.toString());
-        }
-      } catch (error) {
-        console.error('Error parsing auth data:', error);
-      }
+    const auth = localStorage.getItem('auth');
+    if (!auth) {
+      navigate('/login');
+      return;
     }
 
-    const fetchSupplier = async () => {
-      try {
-        // Fetch all suppliers from the API
-        const response = await axios.get("http://localhost:3000/api/suppliers");
-        const foundSupplier = response.data.find(
-          (supplier: any) => supplier.manufacturer_id === Number(supplierId),
-        );
+    const parsedAuth: AuthResponse = JSON.parse(auth);
+    if (parsedAuth.user.role === 'admin') {
+      navigate('/');
+      return;
+    }
 
-        if (foundSupplier) {
-          setSupplier(foundSupplier);
-        } else {
-          console.error("Supplier not found");
+    if (parsedAuth.user.manufacturerId) {
+      setSupplierId(parsedAuth.user.manufacturerId.toString());
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!supplierId) return;
+
+    const token = JSON.parse(localStorage.getItem('auth')!).token;
+    
+    const fetchData = async () => {
+      try {
+        const [categoriesRes, ordersRes, productsRes, customersRes] = 
+          await Promise.all([
+            axios.get('http://localhost:3000/api/categories', {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            axios.get('http://localhost:3000/api/orders', {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            axios.get('http://localhost:3000/api/products', {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            axios.get('http://localhost:3000/api/customers', {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
+
+        setCategories(categoriesRes.data);
+        setOrders(ordersRes.data);
+        setProducts(productsRes.data);
+        setCustomers(customersRes.data);
+
+      } catch (error) {
+        console.error('Data fetch error:', error);
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          localStorage.removeItem('auth');
+          navigate('/login');
         }
-      } catch (error) {
-        console.error("Error fetching supplier:", error);
       }
     };
 
-    const fetchOrders = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/api/orders");
-        setOrders(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      }
-    };
+    fetchData();
+  }, [supplierId, navigate]);
 
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/api/products");
-        setProducts(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      }
-    };
-    fetchSupplier();
-    fetchProducts();
-    fetchOrders();
-    fetchCategories();
-  }, [supplierId]);
 
   const handleApplyFilters = () => {
     // Only apply the current dates if they are not null
@@ -278,27 +276,41 @@ const SupplierDashboard = () => {
         {/* First Row */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="md:col-span-2">
-            <SupplierAreaChart supplierId={supplierId} />
+          <SupplierAreaChart
+              supplierId={supplierId!}
+              orders={orders}
+              products={products}
+            />
           </div>
           <div className="mt-6 flex w-full justify-center">
-            <SupplierQuarterlyMetrics supplierId={supplierId} />
+          <SupplierQuarterlyMetrics
+              supplierId={supplierId!}
+              orders={orders}
+              products={products}
+            />
           </div>
         </div>
 
         {/* Second Row */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="md:col-span-2 flex w-full justify-center">
-            <ProductRevenueLossChart supplierId={supplierId} />
-          </div>
+          <ProductRevenueLossChart
+              supplierId={supplierId!}
+              orders={orders}
+              products={products}
+            />
+            </div>
           <div className="flex w-full justify-center">
-            <AvailableProducts supplierId={supplierId} />
+          <AvailableProducts supplierId={supplierId!} products={products} />
           </div>
         </div>
 
         {/* Full Width Row */}
         <div className="grid grid-cols-1">
-          <TopArticlesOrdered
-            supplierId={supplierId}
+        <TopArticlesOrdered
+            supplierId={supplierId!}
+            orders={orders}
+            products={products}
             startDate={startDate}
             endDate={endDate}
           />
@@ -307,15 +319,22 @@ const SupplierDashboard = () => {
         {/* Dual Charts Row */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="flex w-full justify-center">
-            <SupplierCategoryPieChart
-              supplierId={supplierId}
+          <SupplierCategoryPieChart
+              supplierId={supplierId!}
+              orders={orders}
+              products={products}
+              categories={categories}
+              suppliers={suppliers}
               startDate={startDate}
               endDate={endDate}
             />
           </div>
           <div className="flex w-full justify-center">
-            <ClientSegment
-              supplierId={supplierId}
+          <ClientSegment
+              supplierId={supplierId!}
+              orders={orders}
+              customers={customers}
+              products={products}
               startDate={startDate}
               endDate={endDate}
             />
@@ -325,17 +344,27 @@ const SupplierDashboard = () => {
         {/* Map + Inventory Row */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="md:col-span-2">
-            <RegionsOrders supplierId={supplierId} />
+          <RegionsOrders
+              supplierId={supplierId!}
+              orders={orders}
+              products={products}
+              customers={customers}
+            />
           </div>
           <div className="flex w-full justify-center">
-            <InventoryTrendChart supplierId={supplierId} />
+          <InventoryTrendChart
+              supplierId={supplierId!}
+              products={products}
+              orders={orders}
+            />
           </div>
         </div>
 
         {/* Bottom Full Width Row */}
         <div className="grid grid-cols-1">
-          <SupplierTopProductsChart
-            supplierId={supplierId}
+        <SupplierTopProductsChart
+            supplierId={supplierId!}
+            products={products}  orders={orders}
             startDate={startDate}
             endDate={endDate}
           />

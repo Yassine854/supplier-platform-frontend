@@ -1,27 +1,27 @@
-import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 
-import CardDataStats from "../../components/Charts/suppliers/CardDataStats";
+import CardDataStats from '../../components/Charts/suppliers/CardDataStats';
 import {
   FaClipboardList,
   FaMoneyBillWave,
   FaUsers,
   FaUndo,
-} from "react-icons/fa";
-import axios from "axios";
-import ProductRevenueLossChart from "../../components/Charts/suppliers/ProductRevenueLossChart";
-import TopArticlesOrdered from "../../components/Charts/suppliers/TopArticlesOrdered";
-import SupplierAreaChart from "../../components/Charts/suppliers/SupplierAreaChart";
-import RegionsOrders from "../../components/Charts/suppliers/RegionsOrders";
-import AvailableProducts from "../../components/Charts/suppliers/AvailableProducts";
-import DatePicker from "react-datepicker";
-import ClientSegment from "../../components/Charts/suppliers/ClientSegment";
-import SupplierQuarterlyMetrics from "../../components/Charts/suppliers/SupplierQuarterlyMetrics";
-import SupplierCategoryPieChart from "../../components/Charts/suppliers/SupplierCategoryPieChart";
-import SupplierTopProductsChart from "../../components/Charts/suppliers/SupplierTopProductsChart";
-import InventoryTrendChart from "../../components/Charts/suppliers/InventoryTrendChart";
-import "react-datepicker/dist/react-datepicker.css";
+} from 'react-icons/fa';
+import axios from 'axios';
+import ProductRevenueLossChart from '../../components/Charts/suppliers/ProductRevenueLossChart';
+import TopArticlesOrdered from '../../components/Charts/suppliers/TopArticlesOrdered';
+import SupplierAreaChart from '../../components/Charts/suppliers/SupplierAreaChart';
+import RegionsOrders from '../../components/Charts/suppliers/RegionsOrders';
+import AvailableProducts from '../../components/Charts/suppliers/AvailableProducts';
+import DatePicker from 'react-datepicker';
+import ClientSegment from '../../components/Charts/suppliers/ClientSegment';
+import SupplierQuarterlyMetrics from '../../components/Charts/suppliers/SupplierQuarterlyMetrics';
+import SupplierCategoryPieChart from '../../components/Charts/suppliers/SupplierCategoryPieChart';
+import SupplierTopProductsChart from '../../components/Charts/suppliers/SupplierTopProductsChart';
+import InventoryTrendChart from '../../components/Charts/suppliers/InventoryTrendChart';
+import 'react-datepicker/dist/react-datepicker.css';
 
 // const supplierId = "27"; // Example supplier ID (e.g., Technofood)
 
@@ -38,64 +38,69 @@ const SupplierDashboard = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any>(null);
   const [supplier, setSupplier] = useState<any>(null);
+  const [customers, setCustomers] = useState<any>(null);
 
+  const navigate = useNavigate();
+
+
+  
   useEffect(() => {
-    console.log(supplierId);
-    const fetchCategories = async () => {
+    const token = localStorage.getItem('authToken');
+    const fetchData = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3000/api/categories",
-        );
-        setCategories(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
+        const [
+          categoriesRes,
+          suppliersRes,
+          ordersRes,
+          productsRes,
+          customersRes,
+        ] = await Promise.all([
+          axios.get('http://localhost:3000/api/categories', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get('http://localhost:3000/api/suppliers', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get('http://localhost:3000/api/orders', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get('http://localhost:3000/api/products', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get('http://localhost:3000/api/customers', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-    const fetchSupplier = async () => {
-      try {
-        // Fetch all suppliers from the API
-        const response = await axios.get("http://localhost:3000/api/suppliers");
-        const foundSupplier = response.data.find(
-          (supplier: any) => supplier.manufacturer_id === Number(supplierId),
-        );
+        setCategories(categoriesRes.data);
+        setSuppliers(suppliersRes.data);
+        setOrders(ordersRes.data);
+        setProducts(productsRes.data);
+        setCustomers(customersRes.data);
 
+        // Find supplier logic
+        const foundSupplier = suppliersRes.data.find(
+          (supplier: any) => supplier.manufacturerId === Number(supplierId),
+        );
         if (foundSupplier) {
           setSupplier(foundSupplier);
         } else {
-          console.error("Supplier not found");
+          console.error('Supplier not found');
+          navigate('/suppliers');
         }
       } catch (error) {
-        console.error("Error fetching supplier:", error);
+        console.error('Error fetching data:', error);
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          localStorage.removeItem('authToken');
+          navigate('/login');
+        }
       }
     };
 
-    const fetchOrders = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/api/orders");
-        setOrders(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      }
-    };
-
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/api/products");
-        setProducts(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      }
-    };
-    fetchSupplier();
-    fetchProducts();
-    fetchOrders();
-    fetchCategories();
-  }, [supplierId]);
+    fetchData();
+  }, [supplierId, navigate]);
 
   const handleApplyFilters = () => {
     // Only apply the current dates if they are not null
@@ -111,7 +116,7 @@ const SupplierDashboard = () => {
 
   const totalValidOrders = orders.filter(
     (order) =>
-      order.state != "canceled" &&
+      order.state != 'canceled' &&
       (!appliedStartDate || new Date(order.created_at) >= appliedStartDate) &&
       (!appliedEndDate || new Date(order.created_at) <= appliedEndDate) &&
       order.items.some((item: { product_id: number }) =>
@@ -123,7 +128,7 @@ const SupplierDashboard = () => {
   const uniqueCustomers = new Set<number>();
   orders.forEach((order) => {
     if (
-      order.state != "canceled" &&
+      order.state != 'canceled' &&
       (!appliedStartDate || new Date(order.created_at) >= appliedStartDate) &&
       (!appliedEndDate || new Date(order.created_at) <= appliedEndDate) &&
       order.items.some((item: { product_id: number }) =>
@@ -141,7 +146,7 @@ const SupplierDashboard = () => {
   const totalReturns = orders
     .filter(
       (order) =>
-        order.state !== "canceled" &&
+        order.state !== 'canceled' &&
         (!appliedStartDate || new Date(order.created_at) >= appliedStartDate) &&
         (!appliedEndDate || new Date(order.created_at) <= appliedEndDate),
     )
@@ -156,7 +161,7 @@ const SupplierDashboard = () => {
   const totalTurnover = orders
     .filter(
       (order) =>
-        order.state !== "canceled" &&
+        order.state !== 'canceled' &&
         (!appliedStartDate || new Date(order.created_at) >= appliedStartDate) &&
         (!appliedEndDate || new Date(order.created_at) <= appliedEndDate),
     )
@@ -184,19 +189,18 @@ const SupplierDashboard = () => {
   };
   return (
     <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-7.5">
-
-{supplier && (
-          <div className="mb-6 text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              {supplier.company_name}
-            </h1>
-            {supplier.city && supplier.country && (
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                {supplier.city}, {supplier.country}
-              </p>
-            )}
-          </div>
-        )}
+      {supplier && (
+        <div className="mb-6 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {supplier.company_name}
+          </h1>
+          {supplier.city && supplier.country && (
+            <p className="text-lg text-gray-600 dark:text-gray-400">
+              {supplier.city}, {supplier.country}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Filter Section */}
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -245,10 +249,7 @@ const SupplierDashboard = () => {
           <FaMoneyBillWave className="fill-primary dark:fill-white" />
         </CardDataStats>
 
-        <CardDataStats
-          title="Commandes"
-          total={totalValidOrders.toString()}
-        >
+        <CardDataStats title="Commandes" total={totalValidOrders.toString()}>
           <FaClipboardList className="fill-primary dark:fill-white" />
         </CardDataStats>
 
@@ -259,10 +260,7 @@ const SupplierDashboard = () => {
           <FaUsers className="fill-primary dark:fill-white" />
         </CardDataStats>
 
-        <CardDataStats
-          title="Retours"
-          total={totalReturns.toString()}
-        >
+        <CardDataStats title="Retours" total={totalReturns.toString()}>
           <FaUndo className="fill-primary dark:fill-white" />
         </CardDataStats>
       </div>
@@ -272,20 +270,32 @@ const SupplierDashboard = () => {
         {/* First Row */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="md:col-span-2">
-            <SupplierAreaChart supplierId={supplierId!} />
+            <SupplierAreaChart
+              supplierId={supplierId!}
+              orders={orders}
+              products={products}
+            />{' '}
           </div>
           <div className="mt-6 flex w-full justify-center">
-            <SupplierQuarterlyMetrics supplierId={supplierId!} />
+            <SupplierQuarterlyMetrics
+              supplierId={supplierId!}
+              orders={orders}
+              products={products}
+            />
           </div>
         </div>
 
         {/* Second Row */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="md:col-span-2 flex w-full justify-center">
-            <ProductRevenueLossChart supplierId={supplierId!} />
+            <ProductRevenueLossChart
+              supplierId={supplierId!}
+              orders={orders}
+              products={products}
+            />
           </div>
           <div className="flex w-full justify-center">
-            <AvailableProducts supplierId={supplierId!} />
+            <AvailableProducts supplierId={supplierId!} products={products} />
           </div>
         </div>
 
@@ -293,6 +303,8 @@ const SupplierDashboard = () => {
         <div className="grid grid-cols-1">
           <TopArticlesOrdered
             supplierId={supplierId!}
+            orders={orders}
+            products={products}
             startDate={startDate}
             endDate={endDate}
           />
@@ -303,6 +315,10 @@ const SupplierDashboard = () => {
           <div className="flex w-full justify-center">
             <SupplierCategoryPieChart
               supplierId={supplierId!}
+              orders={orders}
+              products={products}
+              categories={categories}
+              suppliers={suppliers}
               startDate={startDate}
               endDate={endDate}
             />
@@ -310,6 +326,9 @@ const SupplierDashboard = () => {
           <div className="flex w-full justify-center">
             <ClientSegment
               supplierId={supplierId!}
+              orders={orders}
+              customers={customers}
+              products={products}
               startDate={startDate}
               endDate={endDate}
             />
@@ -319,10 +338,19 @@ const SupplierDashboard = () => {
         {/* Map + Inventory Row */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="md:col-span-2">
-            <RegionsOrders supplierId={supplierId!} />
+            <RegionsOrders
+              supplierId={supplierId!}
+              orders={orders}
+              products={products}
+              customers={customers}
+            />
           </div>
           <div className="flex w-full justify-center">
-            <InventoryTrendChart supplierId={supplierId!} />
+            <InventoryTrendChart
+              supplierId={supplierId!}
+              products={products}
+              orders={orders}
+            />
           </div>
         </div>
 
@@ -330,12 +358,13 @@ const SupplierDashboard = () => {
         <div className="grid grid-cols-1">
           <SupplierTopProductsChart
             supplierId={supplierId!}
+            products={products}
+            orders={orders}
             startDate={startDate}
             endDate={endDate}
           />
         </div>
       </div>
-
     </div>
   );
 };

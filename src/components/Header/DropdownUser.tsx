@@ -3,25 +3,31 @@ import { Link, useNavigate } from 'react-router-dom';
 import ClickOutside from '../ClickOutside';
 import UserOne from '../../images/user/user.png';
 
-interface AuthData {
-  role: string;
+interface AuthResponse {
+  success: boolean;
+  token: string;
   user: {
+    role?: string;
     username?: string;
     company_name?: string;
-    email?: string;
+    manufacturerId?: string;
+    contact_name?: string;
+    city?: string;
+    postal_code?: string;
   };
 }
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [authData, setAuthData] = useState<AuthData | null>(null);
+  const [authData, setAuthData] = useState<AuthResponse | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const storedAuth = localStorage.getItem('auth');
     if (storedAuth) {
       try {
-        setAuthData(JSON.parse(storedAuth));
+        const parsedAuth = JSON.parse(storedAuth);
+        setAuthData(parsedAuth);
       } catch (error) {
         console.error('Error parsing auth data:', error);
       }
@@ -34,15 +40,15 @@ const DropdownUser = () => {
   };
 
   const getUserName = () => {
-    if (!authData) return 'Guest';
-    return authData.role === 'superadmin' 
+    if (!authData?.user) return 'Guest';
+    return authData.user.role === 'superadmin' 
       ? authData.user.username 
       : authData.user.company_name;
   };
 
   const getUserRole = () => {
-    if (!authData) return 'Guest';
-    return authData.role.charAt(0).toUpperCase() + authData.role.slice(1);
+    if (!authData?.user?.role) return 'Guest';
+    return authData.user.role.charAt(0).toUpperCase() + authData.user.role.slice(1);
   };
 
   return (
@@ -94,15 +100,13 @@ const DropdownUser = () => {
                 Mon Profil
               </Link>
             </li>
-            
-            
           </ul>
           <button 
             onClick={handleLogout}
             className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
           >
             {/* Logout SVG */}
-            Log Out
+            Déconnecter
           </button>
         </div>
       )}

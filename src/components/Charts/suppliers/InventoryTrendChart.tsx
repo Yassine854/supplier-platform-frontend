@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 
 interface Product {
   product_id: number;
   name: string;
-  manufacturer: string; // Added missing property
+  manufacturer: string;
   stock_item: {
     qty: number;
     is_in_stock: boolean;
@@ -24,7 +22,13 @@ interface ChartState {
   options: any;
 }
 
-const InventoryTrendChart = ({ supplierId }: { supplierId: string }) => {
+interface InventoryTrendChartProps {
+  supplierId: string;
+  products: Product[];
+  orders: any[];
+}
+
+const InventoryTrendChart = ({ supplierId, products, orders }: InventoryTrendChartProps) => {
   const [chartState, setChartState] = useState<ChartState>({
     series: [],
     options: {
@@ -40,21 +44,10 @@ const InventoryTrendChart = ({ supplierId }: { supplierId: string }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const processData = () => {
       try {
         setLoading(true);
         setError(null);
-
-        const [productsRes, ordersRes] = await Promise.all([
-          fetch("http://localhost:3000/api/products"),
-          fetch("http://localhost:3000/api/orders"),
-        ]);
-
-        if (!productsRes.ok || !ordersRes.ok)
-          throw new Error("Data loading failed");
-
-        const products: Product[] = await productsRes.json();
-        const orders: any[] = await ordersRes.json();
 
         const supplierProducts = products.filter(
           (p) => p.manufacturer === supplierId && p.stock_item.is_in_stock,
@@ -125,14 +118,14 @@ const InventoryTrendChart = ({ supplierId }: { supplierId: string }) => {
         });
       } catch (err) {
         console.error("Error:", err);
-        setError("Failed to load inventory data");
+        setError("Failed to process inventory data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [supplierId]);
+    processData();
+  }, [supplierId, products, orders]);
 
   return (
     <div className="border-stroke rounded-lg border bg-white p-6 shadow-lg">

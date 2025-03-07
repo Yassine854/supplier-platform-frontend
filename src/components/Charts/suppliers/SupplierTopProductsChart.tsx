@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 
 interface Product {
   product_id: number;
@@ -28,15 +26,21 @@ interface ChartState {
   options: any;
 }
 
-const SupplierTopProductsChart = ({
-  supplierId,
-  startDate: propStartDate,
-  endDate: propEndDate,
-}: {
+interface SupplierTopProductsChartProps {
   supplierId: string;
+  products: Product[];
+  orders: Order[];
   startDate?: Date | null;
   endDate?: Date | null;
-}) => {
+}
+
+const SupplierTopProductsChart = ({
+  supplierId,
+  products,
+  orders,
+  startDate: propStartDate,
+  endDate: propEndDate,
+}: SupplierTopProductsChartProps) => {
   const [chartState, setChartState] = useState<ChartState>({
     series: [{ name: "Chargement...", data: [0] }],
     options: {
@@ -49,13 +53,9 @@ const SupplierTopProductsChart = ({
     },
   });
 
-  const [startDate, setStartDate] = useState<Date | null>(
-    propStartDate || null,
-  );
+  const [startDate, setStartDate] = useState<Date | null>(propStartDate || null);
   const [endDate, setEndDate] = useState<Date | null>(propEndDate || null);
-  const [metric, setMetric] = useState<"volume" | "revenue" | "turnover">(
-    "volume",
-  );
+  const [metric, setMetric] = useState<"volume" | "revenue" | "turnover">("volume");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,21 +65,10 @@ const SupplierTopProductsChart = ({
   }, [propStartDate, propEndDate]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const processData = () => {
       try {
         setLoading(true);
         setError(null);
-
-        const [productsRes, ordersRes] = await Promise.all([
-          fetch("http://localhost:3000/api/products"),
-          fetch("http://localhost:3000/api/orders"),
-        ]);
-
-        if (!productsRes.ok || !ordersRes.ok)
-          throw new Error("Échec de la récupération des données");
-
-        const products: Product[] = await productsRes.json();
-        const orders: Order[] = await ordersRes.json();
 
         // Create product cost map
         const productCostMap = products.reduce(
@@ -183,12 +172,12 @@ const SupplierTopProductsChart = ({
         });
       } catch (err) {
         console.error("Erreur:", err);
-        setError("Échec du chargement des données. Veuillez réessayer.");
+        setError("Échec du traitement des données. Veuillez vérifier les données fournies.");
         setChartState({
           series: [{ name: "Erreur", data: [0] }],
           options: {
             ...chartState.options,
-            xaxis: { categories: ["Erreur lors du chargement des données"] },
+            xaxis: { categories: ["Erreur lors du traitement des données"] },
           },
         });
       } finally {
@@ -196,8 +185,8 @@ const SupplierTopProductsChart = ({
       }
     };
 
-    fetchData();
-  }, [supplierId, startDate, endDate, metric]);
+    processData();
+  }, [supplierId, startDate, endDate, metric, products, orders]);
 
   return (
     <div className="border-stroke rounded-lg border bg-white p-6 shadow-lg">
@@ -215,28 +204,6 @@ const SupplierTopProductsChart = ({
           <option value="turnover">Chiffre d&apos;Affaires (Coût)</option>
         </select>
       </div>
-
-      {/* <div className="mb-4 flex items-center justify-between">
-        <label className="text-sm font-medium">Période :</label>
-        <div className="flex space-x-2">
-          <DatePicker
-            selected={startDate}
-            onChange={setStartDate}
-            placeholderText="Date de Début"
-            className="w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            dateFormat="MMM d, yyyy"
-            isClearable
-          />
-          <DatePicker
-            selected={endDate}
-            onChange={setEndDate}
-            placeholderText="Date de Fin"
-            className="w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            dateFormat="MMM d, yyyy"
-            isClearable
-          />
-        </div>
-      </div> */}
 
       {error && (
         <div className="mb-4 rounded-lg bg-red-100 p-3 text-red-700">

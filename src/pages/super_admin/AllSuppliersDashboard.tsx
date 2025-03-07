@@ -42,6 +42,8 @@ const AllSuppliersDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = localStorage.getItem('authToken');
+        
         const [
           categoriesRes,
           productsRes,
@@ -50,12 +52,24 @@ const AllSuppliersDashboard = () => {
           customersRes,
           warehousesRes,
         ] = await Promise.all([
-          axios.get("http://localhost:3000/api/categories"),
-          axios.get("http://localhost:3000/api/products"),
-          axios.get("http://localhost:3000/api/orders"),
-          axios.get("http://localhost:3000/api/products_stock"),
-          axios.get("http://localhost:3000/api/customers"),
-          axios.get("http://localhost:3000/api/warehouses"),
+          axios.get("http://localhost:3000/api/categories", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get("http://localhost:3000/api/products", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get("http://localhost:3000/api/orders", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get("http://localhost:3000/api/products_stock", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get("http://localhost:3000/api/customers", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get("http://localhost:3000/api/warehouses", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
         ]);
 
         setCategories(categoriesRes.data);
@@ -162,7 +176,7 @@ const AllSuppliersDashboard = () => {
                 className="w-full rounded-lg border border-stroke bg-white p-2.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white"
               >
                 {warehouses.map((warehouse) => (
-                  <option key={warehouse.id} value={warehouse.id}>
+                  <option key={warehouse.warehouseId} value={warehouse.warehouseId}>
                     {warehouse.name}
                   </option>
                 ))}

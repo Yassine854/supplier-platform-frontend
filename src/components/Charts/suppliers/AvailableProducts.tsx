@@ -1,37 +1,35 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
-import axios from "axios";
 
-const AvailableProducts: React.FC<{ supplierId: string }> = ({
+interface Product {
+  product_id: string;
+  manufacturer: string;
+  name: string;
+  sku: string;
+  stock_item?: {
+    is_in_stock: boolean;
+    qty: number;
+  };
+}
+
+interface AvailableProductsProps {
+  supplierId: string;
+  products: Product[];
+}
+
+const AvailableProducts: React.FC<AvailableProductsProps> = ({
   supplierId,
+  products,
 }) => {
-  const [products, setProducts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 6;
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/api/products");
-        setProducts(response.data);
-        setIsLoading(false);
-      } catch (err) {
-        setError("Failed to fetch products");
-        setIsLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
 
   // Filter available products based on supplier and stock status
   const availableProducts = products.filter(
     (product) =>
       product.manufacturer === supplierId &&
       product.stock_item?.is_in_stock &&
-      product.stock_item?.qty != 0,
+      product.stock_item?.qty !== 0,
   );
 
   const totalAvailableProducts = availableProducts.length;
@@ -48,9 +46,6 @@ const AvailableProducts: React.FC<{ supplierId: string }> = ({
   const handlePreviousPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
-
-  if (isLoading) return <div>Loading products...</div>;
-  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="w-full rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
@@ -79,7 +74,7 @@ const AvailableProducts: React.FC<{ supplierId: string }> = ({
           ))
         ) : (
           <div className="text-center text-gray-500">
-            No available products in stock for this supplier.
+            Aucun produit disponible en stock pour ce fournisseur
           </div>
         )}
       </div>
@@ -95,7 +90,7 @@ const AvailableProducts: React.FC<{ supplierId: string }> = ({
           </button>
 
           <p className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
+            Page {currentPage} sur {totalPages}
           </p>
 
           <button

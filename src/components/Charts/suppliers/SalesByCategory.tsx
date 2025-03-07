@@ -48,7 +48,7 @@ const SalesByCategory: React.FC<{ supplierId: string }> = ({ supplierId }) => {
       if (order.order.state === "delivered") {
         // Only include confirmed orders
         order.order.items.forEach((item) => {
-          if (item.supplier.manufacturer_id === supplierId) {
+          if (item.supplier.manufacturerId === supplierId) {
             const categoryName = item.category.categoryName;
             const totalPrice = parseFloat(item.totalPrice);
 

@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import ApexCharts from "react-apexcharts";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 
 const newColors = [
   "#FF5733",
@@ -24,7 +22,7 @@ interface Customer {
 interface Order {
   entity_id: number;
   customer_id?: number;
-  created_at: string; // Corrected interface
+  created_at: string;
   state: string;
   status: string;
   items: Array<{ product_id: number }>;
@@ -35,15 +33,25 @@ interface Product {
   manufacturer: string;
 }
 
-const ClientSegment: React.FC<{
+interface ClientSegmentProps {
   supplierId: string;
+  orders: Order[];
+  customers: Customer[];
+  products: Product[];
   startDate?: Date | null;
   endDate?: Date | null;
-}> = ({ supplierId, startDate: propStartDate, endDate: propEndDate }) => {
+}
+
+const ClientSegment: React.FC<ClientSegmentProps> = ({
+  supplierId,
+  orders,
+  customers,
+  products,
+  startDate: propStartDate,
+  endDate: propEndDate,
+}) => {
   const [chartData, setChartData] = useState<any>(null);
-  const [startDate, setStartDate] = useState<Date | null>(
-    propStartDate || null,
-  );
+  const [startDate, setStartDate] = useState<Date | null>(propStartDate || null);
   const [endDate, setEndDate] = useState<Date | null>(propEndDate || null);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
   const [segmentDetails, setSegmentDetails] = useState<
@@ -56,100 +64,101 @@ const ClientSegment: React.FC<{
   }, [propStartDate, propEndDate]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const processData = () => {
       try {
-        const [ordersResponse, customersResponse, productsResponse] =
-          await Promise.all([
-            fetch("http://localhost:3000/api/orders"),
-            fetch("http://localhost:3000/api/customers"),
-            fetch("http://localhost:3000/api/products"),
-          ]);
-
-        const orders: Order[] = await ordersResponse.json();
-        const customers: Customer[] = await customersResponse.json();
-        const products: Product[] = await productsResponse.json();
-
-        const customerProfileMap = customers.reduce(
+        // Add null-safe defaults for all input arrays
+        const safeCustomers = customers || [];
+        const safeProducts = products || [];
+        const safeOrders = orders || [];
+  
+        // Safe customer profile mapping
+        const customerProfileMap = safeCustomers.reduce(
           (acc: Record<number, string>, customer) => {
-            // Check if retailer_profile is "0" or empty and categorize as "Inconnue"
-            acc[customer.id] =
-              customer.retailer_profile === "0" || !customer.retailer_profile
-                ? "Inconnue"
-                : customer.retailer_profile;
+            if (customer?.id) {
+              acc[customer.id] =
+                customer.retailer_profile === "0" || !customer.retailer_profile
+                  ? "Inconnue"
+                  : customer.retailer_profile;
+            }
             return acc;
           },
-          {},
+          {}
         );
-
-        const productManufacturerMap = products.reduce(
+  
+        // Safe product manufacturer mapping
+        const productManufacturerMap = safeProducts.reduce(
           (acc: Record<number, string>, product) => {
-            acc[product.product_id] = product.manufacturer;
+            if (product?.product_id) {
+              acc[product.product_id] = product.manufacturer || "Unknown";
+            }
             return acc;
           },
-          {},
+          {}
         );
-
-        // UTC date boundary calculations
+  
+        // Date filtering with null checks
         const startUTC = startDate
           ? Date.UTC(
               startDate.getFullYear(),
               startDate.getMonth(),
-              startDate.getDate(),
+              startDate.getDate()
             )
           : null;
-
+  
         const endUTC = endDate
           ? Date.UTC(
               endDate.getFullYear(),
               endDate.getMonth(),
-              endDate.getDate() + 1,
+              endDate.getDate() + 1
             ) - 1
           : null;
-
-        // Filter orders with UTC comparison
-        const filteredOrders = orders.filter((order) => {
-          const orderTimestamp = new Date(order.created_at).getTime();
-          const hasSupplierProducts = order.items.some(
-            (item) => productManufacturerMap[item.product_id] === supplierId,
+  
+        // Safe order filtering with optional chaining
+        const filteredOrders = safeOrders.filter((order) => {
+          const orderDate = new Date(order?.created_at || 0);
+          const orderTimestamp = orderDate.getTime();
+          
+          const hasSupplierProducts = (order.items || []).some(
+            (item) => productManufacturerMap[item.product_id] === supplierId
           );
-
+  
           const dateValid =
             (!startUTC || orderTimestamp >= startUTC) &&
             (!endUTC || orderTimestamp <= endUTC);
-
+  
           return order.state !== "canceled" && hasSupplierProducts && dateValid;
         });
-
-        // Track unique customers
+  
+        // Safe customer segmentation
         const profileDistribution: Record<string, Set<number>> = {};
         const allCustomers = new Set<number>();
-
+  
         filteredOrders.forEach((order) => {
-          if (order.customer_id) {
-            const profile = customerProfileMap[order.customer_id]; // Already handled "0" or empty profiles as "Inconnue"
-
+          if (order?.customer_id) {
+            const profile = customerProfileMap[order.customer_id] || "Inconnue";
+            
             if (!profileDistribution[profile]) {
               profileDistribution[profile] = new Set();
             }
-
+  
             if (!allCustomers.has(order.customer_id)) {
               profileDistribution[profile].add(order.customer_id);
               allCustomers.add(order.customer_id);
             }
           }
         });
-
-        // Prepare visualization data
+  
+        // Prepare chart data
         const segments = Object.entries(profileDistribution).map(
           ([label, customers]) => ({
             label,
             count: customers.size,
-          }),
+          })
         );
-
+  
         setTotalCustomers(allCustomers.size);
         setSegmentDetails(segments);
-
+  
         setChartData({
           series: segments.map((item) => item.count),
           options: {
@@ -160,11 +169,11 @@ const ClientSegment: React.FC<{
                 dataPointSelection: (
                   event: any,
                   chartContext: any,
-                  config: any,
+                  config: any
                 ) => {
                   console.log(
                     "Selected profile:",
-                    segments[config.dataPointIndex].label,
+                    segments[config.dataPointIndex]?.label
                   );
                 },
               },
@@ -177,46 +186,31 @@ const ClientSegment: React.FC<{
             },
             legend: { show: false },
             tooltip: {
-              y: { formatter: (value: number) => `${value} customers` },
+              y: { formatter: (value: number) => `${value} clients` },
             },
             title: {
               text: `Profils des Clients – Clients uniques : ${allCustomers.size}`,
               align: "center",
+              style: {
+                fontSize: "16px",
+                fontWeight: "bold",
+                fontFamily: "Satoshi, sans-serif",
+              },
             },
           },
         });
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error processing data:", error);
+        setChartData(null);
+        setSegmentDetails([]);
+        setTotalCustomers(0);
       }
     };
-
-    fetchData();
-  }, [supplierId, startDate, endDate]);
-
+  
+    processData();
+  }, [supplierId, orders, customers, products, startDate, endDate]);
   return (
     <div className="w-full rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
-      {/* <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <label className="text-sm font-medium">Période:</label>
-        <div className="flex gap-3">
-          <DatePicker
-            selected={startDate}
-            onChange={setStartDate}
-            placeholderText="Date Début"
-            className="w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            dateFormat="MMM d, yyyy"
-            isClearable
-          />
-          <DatePicker
-            selected={endDate}
-            onChange={setEndDate}
-            placeholderText="Date Fin"
-            className="w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            dateFormat="MMM d, yyyy"
-            isClearable
-          />
-        </div>
-      </div> */}
-
       <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-inner">
         {chartData ? (
           <ApexCharts
@@ -227,7 +221,7 @@ const ClientSegment: React.FC<{
           />
         ) : (
           <p className="text-center text-gray-500">
-            Loading retailer profiles...
+            Chargement des profils des détaillants...
           </p>
         )}
       </div>
@@ -245,10 +239,10 @@ const ClientSegment: React.FC<{
             <div className="flex-1">
               <div className="flex flex-col">
                 <span className="break-words font-medium text-gray-800">
-                  {segment.label || "No Profile"}
+                  {segment.label || "Profil inconnu"}
                 </span>
                 <span className="mt-1 text-sm text-gray-500">
-                  {segment.count} unique customers
+                  {segment.count} clients uniques
                 </span>
               </div>
             </div>

@@ -102,7 +102,7 @@ const AvailableProducts: React.FC<AvailableProductsProps> = ({
 
   return (
     <div className="w-full rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
-      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-4 flex flex-col gap-4">
         <h2 className="text-xl font-semibold">
           {warehouseId
             ? `Produits disponibles (${

@@ -1,8 +1,6 @@
 import { ApexOptions } from "apexcharts";
 import React, { useState, useEffect } from "react";
 import ReactApexChart from "react-apexcharts";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 
 const generateUniqueColors = (count: number) => {
   return Array.from(
@@ -30,18 +28,20 @@ interface Product {
 
 interface Props {
   supplierId: string;
+  products: Product[];
+  orders: Order[];
   startDate?: Date | null;
   endDate?: Date | null;
 }
 
 const TopArticlesOrdered: React.FC<Props> = ({
   supplierId,
+  products,
+  orders,
   startDate: propStartDate,
   endDate: propEndDate,
 }) => {
-  const [startDate, setStartDate] = useState<Date | null>(
-    propStartDate || null,
-  );
+  const [startDate, setStartDate] = useState<Date | null>(propStartDate || null);
   const [endDate, setEndDate] = useState<Date | null>(propEndDate || null);
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 4;
@@ -58,20 +58,14 @@ const TopArticlesOrdered: React.FC<Props> = ({
   }, [propStartDate, propEndDate]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const processData = () => {
       try {
-        const productsRes = await fetch("http://localhost:3000/api/products");
-        const ordersRes = await fetch("http://localhost:3000/api/orders");
-
-        const products = await productsRes.json();
-        const orders = await ordersRes.json();
-
         const filteredProducts = products.filter(
-          (product: Product) => product.manufacturer === supplierId,
+          (product) => product.manufacturer === supplierId,
         );
         const productOrders: Record<string, number> = {};
 
-        orders.forEach((order: Order) => {
+        orders.forEach((order) => {
           if (order.state !== "canceled") {
             const orderDate = new Date(order.created_at);
             if (
@@ -80,7 +74,7 @@ const TopArticlesOrdered: React.FC<Props> = ({
             ) {
               order.items.forEach((item) => {
                 const product = filteredProducts.find(
-                  (p: Product) => p.product_id === item.product_id,
+                  (p) => p.product_id === item.product_id,
                 );
                 if (product) {
                   productOrders[product.name] =
@@ -108,12 +102,12 @@ const TopArticlesOrdered: React.FC<Props> = ({
           ordersCount,
         });
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error processing data:", error);
       }
     };
 
-    fetchData();
-  }, [supplierId, startDate, endDate]);
+    processData();
+  }, [supplierId, startDate, endDate, products, orders]);
 
   const totalPages = Math.ceil(state.labels.length / itemsPerPage);
   const currentItems = state.labels.slice(
@@ -152,27 +146,6 @@ const TopArticlesOrdered: React.FC<Props> = ({
       <h3 className="mb-6 text-center text-2xl font-semibold">
         Produits les plus commandés
       </h3>
-      {/* <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <label className="text-sm font-medium">Période:</label>
-        <div className="flex gap-3">
-          <DatePicker
-            selected={startDate}
-            onChange={setStartDate}
-            placeholderText="Date début"
-            className="w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            dateFormat="MMM d, yyyy"
-            isClearable
-          />
-          <DatePicker
-            selected={endDate}
-            onChange={setEndDate}
-            placeholderText="Date fin"
-            className="w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            dateFormat="MMM d, yyyy"
-            isClearable
-          />
-        </div>
-      </div> */}
 
       <div className="flex flex-col items-start sm:flex-row">
         <div className="flex w-full justify-center sm:w-1/2">
@@ -206,7 +179,6 @@ const TopArticlesOrdered: React.FC<Props> = ({
             );
           })}
 
-          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="mt-4 flex justify-between">
               <button

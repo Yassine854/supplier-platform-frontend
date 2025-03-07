@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ApexCharts from "react-apexcharts";
 
-interface ProductRevenueLossChartProps {
-  supplierId: string;
-}
-
 interface OrderItem {
   product_id: number;
   amount_refunded: number;
@@ -21,36 +17,18 @@ interface Product {
   manufacturer: string;
 }
 
+interface ProductRevenueLossChartProps {
+  supplierId: string;
+  orders: Order[];
+  products: Product[];
+}
+
 const ProductRevenueLossChart: React.FC<ProductRevenueLossChartProps> = ({
   supplierId,
+  orders,
+  products,
 }) => {
-  const [timeFilter, setTimeFilter] = useState("yearly");
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [ordersRes, productsRes] = await Promise.all([
-          fetch("http://localhost:3000/api/orders"),
-          fetch("http://localhost:3000/api/products"),
-        ]);
-
-        const ordersData = await ordersRes.json();
-        const productsData = await productsRes.json();
-
-        setOrders(ordersData);
-        setProducts(productsData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const [timeFilter, setTimeFilter] = useState("annuel");
 
   // Get supplier's product IDs
   const supplierProductIds = new Set(
@@ -59,18 +37,18 @@ const ProductRevenueLossChart: React.FC<ProductRevenueLossChartProps> = ({
       .map((product) => product.product_id),
   );
 
-  const getTimeKey = (date: Date, filter: string) => {
+  const getTimeKey = (date: Date) => {
     const pad = (n: number) => String(n).padStart(2, "0");
-    switch (filter) {
-      case "daily":
+    switch (timeFilter) {
+      case "quotidien":
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
           date.getDate(),
         )}`;
-      case "weekly":
+      case "hebdomadaire":
         return `${date.getFullYear()}-W${Math.ceil(date.getDate() / 7)}`;
-      case "monthly":
+      case "mensuel":
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
-      case "semestrial":
+      case "semestriel":
         return `${date.getFullYear()}-S${date.getMonth() < 6 ? 1 : 2}`;
       default:
         return `${date.getFullYear()}`;
@@ -79,8 +57,10 @@ const ProductRevenueLossChart: React.FC<ProductRevenueLossChartProps> = ({
 
   const { labels, values } = orders.reduce(
     (acc, order) => {
+      if (order.state === "canceled") return acc;
+      
       const orderDate = new Date(order.created_at);
-      const timeKey = getTimeKey(orderDate, timeFilter);
+      const timeKey = getTimeKey(orderDate);
 
       // Filter items for supplier's products and calculate refunds
       const totalRefund = order.items
@@ -153,11 +133,7 @@ const ProductRevenueLossChart: React.FC<ProductRevenueLossChartProps> = ({
         </select>
       </div>
 
-      {loading ? (
-        <div className="py-8 text-center">
-          Chargement des données de remboursement...
-        </div>
-      ) : sortedLabels.length > 0 ? (
+      {sortedLabels.length > 0 ? (
         <ApexCharts
           options={chartData.options}
           series={chartData.series}
