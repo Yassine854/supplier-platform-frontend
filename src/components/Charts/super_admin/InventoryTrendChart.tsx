@@ -30,7 +30,7 @@ interface Category {
 }
 
 interface Warehouse {
-  id: number;
+  warehouseId: number;
   name: string;
   [key: string]: any;
 }
@@ -62,7 +62,7 @@ const InventoryTrendChart: React.FC<InventoryTrendChartProps> = ({
 
   // Get warehouse details from props
   const selectedWarehouse = useMemo(() => {
-    return warehouses.find((wh) => wh.id === warehouseId);
+    return warehouses.find((wh) => wh.warehouseId === warehouseId);
   }, [warehouseId, warehouses]);
 
   const salesMap = useMemo(() => {
@@ -94,21 +94,22 @@ const InventoryTrendChart: React.FC<InventoryTrendChartProps> = ({
     if (!warehouseId) return [];
 
     return productsStock
-      .filter((productStock) => {
-        const product = products.find(
-          (p) => p.product_id === productStock.product_id,
-        );
-        const warehouseStock = productStock.stock.find(
-          (s) => s.store_id === warehouseId,
-        );
-
-        return (
-          warehouseStock &&
-          warehouseStock.quantity > 0 &&
-          (!selectedCategory ||
-            product?.category_ids?.includes(selectedCategory))
-        );
-      })
+    .filter((productStock) => {
+      const product = products.find(
+        (p) => p.product_id === productStock.product_id
+      );
+      const warehouseStock = productStock.stock.find(
+        (s) => s.store_id === warehouseId
+      );
+    
+      return (
+        product &&
+        warehouseStock &&
+        warehouseStock.quantity > 0 &&
+        (!selectedCategory || 
+          product?.category_ids?.includes(selectedCategory))
+      );
+    })
       .map((productStock) => {
         const product = products.find(
           (p) => p.product_id === productStock.product_id,
@@ -135,7 +136,7 @@ const InventoryTrendChart: React.FC<InventoryTrendChartProps> = ({
         });
 
         return {
-          name: product.name,
+          name: product?.name,
           data: inventoryData.sort((a, b) => a.x.getTime() - b.x.getTime()),
         };
       });

@@ -18,7 +18,7 @@ import ClientSegment from "../../components/Charts/super_admin/ClientSegment";
 import RegionsOrders from "../../components/Charts/super_admin/RegionsOrders";
 import InventoryTrendChart from "../../components/Charts/super_admin/InventoryTrendChart";
 import SupplierTopProductsChart from "../../components/Charts/super_admin/SupplierTopProductsChart";
-
+import { API_BASE_URL } from "../../config";
 
 const AllSuppliersDashboard = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -26,6 +26,7 @@ const AllSuppliersDashboard = () => {
   const [selectedWarehouse, setSelectedWarehouse] = useState<string | null>(
     null,
   );
+
 
   const [appliedStartDate, setAppliedStartDate] = useState<Date | null>(null);
   const [appliedEndDate, setAppliedEndDate] = useState<Date | null>(null);
@@ -52,22 +53,22 @@ const AllSuppliersDashboard = () => {
           customersRes,
           warehousesRes,
         ] = await Promise.all([
-          axios.get("http://localhost:3000/api/categories", {
+          axios.get(`${API_BASE_URL}/api/categories`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get("http://localhost:3000/api/products", {
+          axios.get(`${API_BASE_URL}/api/products/all`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get("http://localhost:3000/api/orders", {
+          axios.get(`${API_BASE_URL}/api/orders`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get("http://localhost:3000/api/products_stock", {
+          axios.get(`${API_BASE_URL}/api/products_stock`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get("http://localhost:3000/api/customers", {
+          axios.get(`${API_BASE_URL}/api/customers`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get("http://localhost:3000/api/warehouses", {
+          axios.get(`${API_BASE_URL}/api/warehouses`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
         ]);
@@ -166,7 +167,7 @@ const AllSuppliersDashboard = () => {
         <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="flex flex-col gap-4 md:flex-row">
             {/* Warehouse Filter */}
-            <div className="w-full md:w-40">
+            <div className="w-full md:w-50">
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">
                 Warehouse
               </label>

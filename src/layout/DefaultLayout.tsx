@@ -3,6 +3,7 @@ import Header from '../components/Header/index';
 import Sidebar from '../components/Sidebar/index';
 import axios from "axios";
 import Footer from "./footer";
+import { API_BASE_URL } from "../config";
 
 interface AuthResponse {
   success: boolean;
@@ -36,7 +37,7 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
           const fetchSupplier = async () => {
             try {
               const response = await axios.get(
-                'http://localhost:3000/api/suppliers',
+                `${API_BASE_URL}/api/suppliers`,
                 {
                   headers: { 
                     Authorization: `Bearer ${parsedAuth.token}` 

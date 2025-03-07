@@ -20,6 +20,7 @@ import SupplierCategoryPieChart from "../../components/Charts/suppliers/Supplier
 import SupplierTopProductsChart from "../../components/Charts/suppliers/SupplierTopProductsChart";
 import InventoryTrendChart from "../../components/Charts/suppliers/InventoryTrendChart";
 import "react-datepicker/dist/react-datepicker.css";
+import { API_BASE_URL } from "../../config";
 
 // const supplierId = "27"; // Example supplier ID (e.g., Technofood)
 
@@ -83,16 +84,16 @@ const SupplierDashboard = () => {
       try {
         const [categoriesRes, ordersRes, productsRes, customersRes] = 
           await Promise.all([
-            axios.get('http://localhost:3000/api/categories', {
+            axios.get(`${API_BASE_URL}/api/categories`, {
               headers: { Authorization: `Bearer ${token}` },
             }),
-            axios.get('http://localhost:3000/api/orders', {
+            axios.get(`${API_BASE_URL}/api/orders`, {
               headers: { Authorization: `Bearer ${token}` },
             }),
-            axios.get('http://localhost:3000/api/products', {
+            axios.get(`${API_BASE_URL}/api/products/all`, {
               headers: { Authorization: `Bearer ${token}` },
             }),
-            axios.get('http://localhost:3000/api/customers', {
+            axios.get(`${API_BASE_URL}/api/customers`, {
               headers: { Authorization: `Bearer ${token}` },
             }),
           ]);

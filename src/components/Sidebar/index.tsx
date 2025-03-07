@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import SidebarLinkGroup from './SidebarLinkGroup';
 import Logo from '../../images/logo/Kamioun Logo.png';
 import axios from 'axios';
+import { API_BASE_URL } from "../../config";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -103,7 +104,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       
       setIsLoading(true);
       try {
-        const response = await axios.get("http://localhost:3000/api/suppliers", {
+        const response = await axios.get(`${API_BASE_URL}/api/suppliers`, {
           headers: { Authorization: `Bearer ${authToken}` }
         });
         setAllSuppliers(response.data);

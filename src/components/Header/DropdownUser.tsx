@@ -36,6 +36,7 @@ const DropdownUser = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('auth');
+    localStorage.removeItem('authToken');
     navigate('/auth/signin');
   };
 

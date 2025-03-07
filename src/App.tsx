@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate,Navigate } from 'react-router-dom';
 import Loader from './common/Loader';
 import SignIn from './pages/Authentication/SignIn';
 import SignUp from './pages/Authentication/SignUp';
@@ -14,6 +14,7 @@ import DefaultLayout from './layout/DefaultLayout';
 import SupplierDashboard from './pages/suppliers/SupplierDashboard';
 import SuperAdminDashboard from './pages/super_admin/AllSuppliersDashboard';
 import SupplierDashboard_sp from './pages/super_admin/SupplierDashboard';
+import { jwtDecode } from 'jwt-decode';
 
 interface AuthResponse {
   success: boolean;
@@ -34,6 +35,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const { pathname } = useLocation();
   const [authChecked, setAuthChecked] = useState(false);
+  const navigate = useNavigate();
+
 
   // Simple auth check function
   const isAuthenticated = () => {
@@ -45,11 +48,40 @@ function App() {
     }
   };
 
+
+  
+
+
   useEffect(() => {
     // Clean up invalid auth data
     if (!isAuthenticated()) {
       localStorage.removeItem('auth');
+      localStorage.removeItem('authToken');
     }
+
+    const checkToken = () => {
+      const auth = localStorage.getItem('auth');
+      if (!auth) return;
+
+      try {
+        const { token } = JSON.parse(auth);
+        const { exp } = jwtDecode(token) as { exp: number };
+        
+        if (Date.now() >= exp * 1000) {
+          localStorage.removeItem('auth');
+          localStorage.removeItem('authToken');
+          navigate('/auth/signin');
+        }
+      } catch (error) {
+        localStorage.removeItem('auth');
+        localStorage.removeItem('authToken');
+
+        navigate('/auth/signin');
+      }
+    };
+
+    checkToken();
+
     setAuthChecked(true);
     setLoading(false);
   }, []);
