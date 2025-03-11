@@ -90,7 +90,7 @@ const SupplierDashboard = () => {
             axios.get(`${API_BASE_URL}/api/orders`, {
               headers: { Authorization: `Bearer ${token}` },
             }),
-            axios.get(`${API_BASE_URL}/api/products/all`, {
+            axios.get(`${API_BASE_URL}/api/supplier_products`, {
               headers: { Authorization: `Bearer ${token}` },
             }),
             axios.get(`${API_BASE_URL}/api/customers`, {

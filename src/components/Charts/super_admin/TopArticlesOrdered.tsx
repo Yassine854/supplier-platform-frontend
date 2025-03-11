@@ -43,7 +43,7 @@ const IntegratedSalesChart = () => {
         const [categoriesRes, productsRes, ordersRes, suppliersRes] =
           await Promise.all([
             fetch("/api/categories"),
-            fetch("/api/products"),
+            fetch("/api/supplier_products"),
             fetch("/api/orders"),
             fetch("/api/customers"),
           ]);
