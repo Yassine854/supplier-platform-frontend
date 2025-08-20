@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import CardDataStats from "../../components/Charts/suppliers/CardDataStats";
 import {
@@ -201,6 +201,34 @@ const SupplierDashboard = () => {
       setAppliedEndDate(null);
     }
   };
+
+  // Load Google AdSense script once
+  useEffect(() => {
+    const scriptSrc = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8913041961914313';
+    const existing = document.querySelector(`script[src="${scriptSrc}"]`);
+    if (!existing) {
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = scriptSrc;
+      s.crossOrigin = 'anonymous';
+      document.head.appendChild(s);
+    }
+  }, []);
+
+  // Initialize AdSense ad unit once
+  const adInitialized = useRef(false);
+  useEffect(() => {
+    if (adInitialized.current) return;
+    try {
+      (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+      (window as any).adsbygoogle.push({});
+      adInitialized.current = true;
+    } catch (err) {
+      // Fail silently; AdSense will try again once the script is loaded
+      console.error('AdSense init error:', err);
+    }
+  }, []);
+
   return (
     <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-7.5">
       {/* Filter Section */}
@@ -273,6 +301,16 @@ const SupplierDashboard = () => {
       </div>
 
 
+
+      {/* Google AdSense */}
+      <div className="my-6">
+        <ins className="adsbygoogle"
+             style={{ display: 'block' }}
+             data-ad-client="ca-pub-8913041961914313"
+             data-ad-slot="2331546993"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+      </div>
 
       {/* Charts Grid */}
       <div className="mt-6 grid w-full grid-cols-1 gap-6">
