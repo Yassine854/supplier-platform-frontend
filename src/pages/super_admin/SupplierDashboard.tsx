@@ -241,6 +241,7 @@ const SupplierDashboard = () => {
         </button>
       </div>
 
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
         <CardDataStats
@@ -337,7 +338,7 @@ const SupplierDashboard = () => {
         </div>
 
         {/* Map + Inventory Row */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        {/* <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="md:col-span-2">
             <RegionsOrders
               supplierId={supplierId!}
@@ -353,7 +354,16 @@ const SupplierDashboard = () => {
               orders={orders}
             />
           </div>
-        </div>
+        </div> */}
+
+<div className="grid grid-cols-1">
+          <RegionsOrders
+              supplierId={supplierId!}
+              orders={orders}
+              products={products}
+              customers={customers}
+            />
+          </div>
 
         {/* Bottom Full Width Row */}
         <div className="grid grid-cols-1">

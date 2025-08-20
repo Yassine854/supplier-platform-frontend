@@ -35,6 +35,9 @@ const SignIn: React.FC = () => {
       // Store authentication data and redirect
       localStorage.setItem('auth', JSON.stringify(data));
       localStorage.setItem('authToken', data.token);
+      if (data.guestToken) {
+        localStorage.setItem('token', data.guestToken);
+      }
       
       if (data.role === 'superadmin') {
         navigate('/admin/dashboard');
