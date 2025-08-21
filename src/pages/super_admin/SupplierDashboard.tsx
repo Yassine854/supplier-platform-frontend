@@ -312,10 +312,8 @@ const SupplierDashboard = () => {
           />
         </div>
 
-        {/* Dual Charts Row */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="flex w-full justify-center">
-            <SupplierCategoryPieChart
+        <div className="grid grid-cols-1">
+          <SupplierCategoryPieChart
               supplierId={supplierId!}
               orders={orders}
               products={products}
@@ -324,9 +322,11 @@ const SupplierDashboard = () => {
               startDate={startDate}
               endDate={endDate}
             />
-          </div>
-          <div className="flex w-full justify-center">
-            <ClientSegment
+        </div>
+
+
+        <div className="grid grid-cols-1">
+          <ClientSegment
               supplierId={supplierId!}
               orders={orders}
               customers={customers}
@@ -334,8 +334,9 @@ const SupplierDashboard = () => {
               startDate={startDate}
               endDate={endDate}
             />
-          </div>
-        </div>
+        </div>  
+
+        
 
         {/* Map + Inventory Row */}
         {/* <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

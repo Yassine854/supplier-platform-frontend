@@ -213,3 +213,8 @@ span.flatpickr-weekday,
 [x-cloak] {
   display: none !important;
 }
+.apexcharts-datalabel-label,
+.apexcharts-datalabel-value,
+.apexcharts-pie-label {
+  @apply !fill-white !text-white;
+}

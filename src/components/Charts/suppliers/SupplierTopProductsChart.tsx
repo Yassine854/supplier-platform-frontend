@@ -197,7 +197,7 @@ const SupplierTopProductsChart = ({
           onChange={(e) =>
             setMetric(e.target.value as "volume" | "revenue" | "turnover")
           }
-          className="w-55 px-15 rounded border py-1 text-sm"
+          className="rounded border px-4 py-2 text-sm"
         >
           <option value="volume">Volume</option>
           <option value="revenue">Chiffre d&apos;Affaires (Ventes)</option>

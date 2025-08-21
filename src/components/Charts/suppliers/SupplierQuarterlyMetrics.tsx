@@ -32,10 +32,10 @@ interface SupplierQuarterlyMetricsProps {
 const SupplierQuarterlyMetrics = ({
   supplierId,
   orders,
-  products
+  products,
 }: SupplierQuarterlyMetricsProps) => {
   const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear(),
+    new Date().getFullYear()
   );
   const [quartersData, setQuartersData] = useState<QuarterlyData[]>([]);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
@@ -44,25 +44,25 @@ const SupplierQuarterlyMetrics = ({
     if (!orders.length || !products.length) return;
 
     const supplierProducts = products.filter(
-      (p) => p.manufacturer === supplierId,
+      (p) => p.manufacturer === supplierId
     );
     const supplierProductIds = new Set(
-      supplierProducts.map((p) => p.product_id),
+      supplierProducts.map((p) => p.product_id)
     );
     const productMap = new Map(
-      supplierProducts.map((p) => [p.product_id, p]),
+      supplierProducts.map((p) => [p.product_id, p])
     );
 
     const validOrders = orders.filter(
       (order) =>
         order.state !== "canceled" &&
-        order.items.some((item) => supplierProductIds.has(item.product_id)),
+        order.items.some((item) => supplierProductIds.has(item.product_id))
     );
 
     const years = Array.from(
       new Set(
-        validOrders.map((order) => new Date(order.created_at).getFullYear()),
-      ),
+        validOrders.map((order) => new Date(order.created_at).getFullYear())
+      )
     ).sort((a: number, b: number) => b - a);
 
     setAvailableYears(years);
@@ -70,6 +70,7 @@ const SupplierQuarterlyMetrics = ({
       setSelectedYear(years[0]);
     }
 
+    // build quarterly data
     const quarterlyMap = validOrders.reduce(
       (acc: Map<string, QuarterlyData>, order) => {
         const orderDate = new Date(order.created_at);
@@ -105,18 +106,34 @@ const SupplierQuarterlyMetrics = ({
 
         return acc;
       },
-      new Map<string, QuarterlyData>(),
+      new Map<string, QuarterlyData>()
     );
 
-    setQuartersData(Array.from(quarterlyMap.values()));
+    // Always include Q1–Q4 (fill empty with zeros)
+    const allQuarters = ["Q1", "Q2", "Q3", "Q4"];
+    const quartersArray = allQuarters.map((q) => {
+      return (
+        quarterlyMap.get(q) || {
+          quarter: q,
+          totalOrders: 0,
+          uniqueCustomers: new Set<number>(),
+          turnover: 0,
+        }
+      );
+    });
+
+    setQuartersData(quartersArray);
   }, [orders, products, supplierId, selectedYear]);
 
-  // Calculate yearly totals
+  // yearly totals
   const totalOrders = quartersData.reduce((sum, q) => sum + q.totalOrders, 0);
   const totalUniqueCustomers = new Set(
-    quartersData.flatMap((q) => Array.from(q.uniqueCustomers)),
+    quartersData.flatMap((q) => Array.from(q.uniqueCustomers))
   ).size;
-  const totalTurnover = quartersData.reduce((sum, q) => sum + q.turnover, 0);
+  const totalTurnover = quartersData.reduce(
+    (sum, q) => sum + q.turnover,
+    0
+  );
 
   return (
     <div className="border-stroke rounded-lg border bg-white p-4 shadow-lg">
@@ -138,7 +155,7 @@ const SupplierQuarterlyMetrics = ({
         </select>
       </div>
 
-      {/* Optimized Table - No Scrolling */}
+      {/* Optimized Table */}
       {quartersData.length > 0 ? (
         <table className="w-full text-sm sm:text-base">
           <thead>
@@ -155,7 +172,9 @@ const SupplierQuarterlyMetrics = ({
                 <td className="p-2 sm:p-3">{data.quarter}</td>
                 <td className="p-2 sm:p-3">{data.totalOrders}</td>
                 <td className="p-2 sm:p-3">{data.uniqueCustomers.size}</td>
-                <td className="p-2 sm:p-3">{(data.turnover || 0).toFixed(2)}</td>
+                <td className="p-2 sm:p-3">
+                  {(data.turnover || 0).toFixed(2)}
+                </td>
               </tr>
             ))}
             <tr className="bg-gray-200 font-semibold">

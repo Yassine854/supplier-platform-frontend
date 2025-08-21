@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import CardDataStats from "../../components/Charts/suppliers/CardDataStats";
 import {
@@ -21,9 +21,9 @@ import SupplierTopProductsChart from "../../components/Charts/suppliers/Supplier
 import InventoryTrendChart from "../../components/Charts/suppliers/InventoryTrendChart";
 import "react-datepicker/dist/react-datepicker.css";
 import { API_BASE_URL } from "../../config";
-
-// const supplierId = "27"; // Example supplier ID (e.g., Technofood)
-
+import { Bling as GPT } from "react-gpt";// const supplierId = "27"; // Example supplier ID (e.g., Technofood)
+import AdBanner from "./AdBanner";
+import FakeAdBanner from "./fakeAd"
 interface AuthResponse {
   success: boolean;
   token: string;
@@ -201,35 +201,8 @@ const SupplierDashboard = () => {
       setAppliedEndDate(null);
     }
   };
-
-  // Load Google AdSense script once
-  useEffect(() => {
-    const scriptSrc = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8913041961914313';
-    const existing = document.querySelector(`script[src="${scriptSrc}"]`);
-    if (!existing) {
-      const s = document.createElement('script');
-      s.async = true;
-      s.src = scriptSrc;
-      s.crossOrigin = 'anonymous';
-      document.head.appendChild(s);
-    }
-  }, []);
-
-  // Initialize AdSense ad unit once
-  const adInitialized = useRef(false);
-  useEffect(() => {
-    if (adInitialized.current) return;
-    try {
-      (window as any).adsbygoogle = (window as any).adsbygoogle || [];
-      (window as any).adsbygoogle.push({});
-      adInitialized.current = true;
-    } catch (err) {
-      // Fail silently; AdSense will try again once the script is loaded
-      console.error('AdSense init error:', err);
-    }
-  }, []);
-
   return (
+    
     <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-7.5">
       {/* Filter Section */}
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -260,7 +233,15 @@ const SupplierDashboard = () => {
             />
           </div>
         </div>
-
+<GPT
+        adUnitPath="/6355419/Travel/Europe/France/Paris"
+        sizeMapping={[
+            { viewport: [0, 0], slot: [320, 50] },
+            // { viewport: [750, 0], slot: [728, 90] },
+            // { viewport: [1050, 0], slot: [1024, 120] },
+        ]}
+        nativeTemplateId="10101010"
+      />
         <button
           onClick={handleApplyFilters}
           className="flex items-center justify-center rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-opacity-90"
@@ -300,17 +281,7 @@ const SupplierDashboard = () => {
         </CardDataStats>
       </div>
 
-
-
-      {/* Google AdSense */}
-      <div className="my-6">
-        <ins className="adsbygoogle"
-             style={{ display: 'block' }}
-             data-ad-client="ca-pub-8913041961914313"
-             data-ad-slot="2331546993"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-      </div>
+  
 
       {/* Charts Grid */}
       <div className="mt-6 grid w-full grid-cols-1 gap-6">
@@ -419,6 +390,8 @@ const SupplierDashboard = () => {
             endDate={endDate}
           />
         </div>
+
+        
       </div>
 
     </div>

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import SidebarLinkGroup from './SidebarLinkGroup';
-import Logo from '../../images/logo/Kamioun Logo.png';
+import Logo from '../../images/logo/yellow-kamioun.png';
 import axios from 'axios';
 import { API_BASE_URL } from "../../config";
+import FakeAdBanner from "../../pages/suppliers/fakeAd"
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -164,14 +165,15 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           className="group relative flex w-full items-center justify-center transition-transform duration-300 hover:scale-[1.02]"
         >
           <div className="relative rounded-lg p-2">
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-gray-900/5 to-gray-900/0 opacity-50 transition-opacity duration-300 group-hover:opacity-70 dark:from-white/5 dark:to-white/0" />
-            <div className="absolute inset-0 rounded-lg border-2 border-stroke/10 transition-all duration-500 group-hover:border-primary/30 dark:border-strokedark/20 dark:group-hover:border-primary/50" />
-            <img 
-              src={Logo} 
-              alt="Kamioun Logo" 
-              className="relative z-10 w-32 drop-shadow-xl filter transition-all duration-300 md:w-40 lg:w-48 dark:brightness-125" 
-            />
-          </div>
+  <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-gray-900/5 to-gray-900/0 opacity-50 transition-opacity duration-300 group-hover:opacity-70 dark:from-white/5 dark:to-white/0" />
+  
+  <img 
+    src={Logo} 
+    alt="Kamioun Logo" 
+    className="relative z-10 w-24 drop-shadow-xl filter transition-all duration-300 md:w-32 lg:w-40 dark:brightness-125" 
+  />
+</div>
+
           <div className="absolute -inset-2 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-100" />
         </NavLink>
   
@@ -433,6 +435,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           </div>
         </nav>
         {/* <!-- Sidebar Menu --> */}
+
+        <FakeAdBanner/>
       </div>
     </aside>
 

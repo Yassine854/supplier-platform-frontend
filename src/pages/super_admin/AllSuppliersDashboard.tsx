@@ -291,10 +291,8 @@ const AllSuppliersDashboard = () => {
   
           
   
-          {/* Dual Charts Row */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="flex w-full justify-center">
-              <SupplierCategoryPieChart
+          <div className="grid grid-cols-1">
+            <SupplierCategoryPieChart
                 orders={orders}
                 products={products}
                 categories={categories}
@@ -302,37 +300,24 @@ const AllSuppliersDashboard = () => {
                 startDate={appliedStartDate}
                 endDate={appliedEndDate}
               />
-            </div>
-            <div className="flex w-full justify-center">
-              <ClientSegment
-                orders={orders}
-                customers={customers}
-                warehouseId={appliedWarehouse ? Number(appliedWarehouse) : null}
-                startDate={appliedStartDate}
-                endDate={appliedEndDate}
-              />
-            </div>
           </div>
-  
-          {/* Map + Inventory Row */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div className="md:col-span-2 flex w-full justify-center">
-              <RegionsOrders
+
+          <div className="grid grid-cols-1">
+            <ClientSegment
+                orders={orders}
+                customers={customers}
+                warehouseId={appliedWarehouse ? Number(appliedWarehouse) : null}
+                startDate={appliedStartDate}
+                endDate={appliedEndDate}
+              />
+          </div>
+
+          <div className="grid grid-cols-1">
+            <RegionsOrders
                 orders={orders}
                 customers={customers}
                 warehouseId={appliedWarehouse ? Number(appliedWarehouse) : null}
               />
-            </div>
-            <div className="flex w-full justify-center">
-              <InventoryTrendChart
-                warehouseId={appliedWarehouse ? Number(appliedWarehouse) : null}
-                warehouses={warehouses}
-                products={products}
-                orders={orders}
-                productsStock={products_stock}
-                categories={categories}
-              />
-            </div>
           </div>
   
           {/* Bottom Full Width Row */}

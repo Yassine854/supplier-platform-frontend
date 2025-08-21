@@ -293,8 +293,8 @@ const SupplierCategoryComparisonChart: React.FC<SupplierCategoryComparisonChartP
         )}
       </div>
       
-      {/* {JSON.parse(localStorage.getItem('auth') || '{}')?.user?.role === 'superadmin' && ( */}
-      {JSON.parse(localStorage.getItem('auth') || '{}') && (
+       {JSON.parse(localStorage.getItem('auth') || '{}')?.user?.role === 'superadmin' && ( 
+      // {JSON.parse(localStorage.getItem('auth') || '{}') && (
 
   <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
     {Object.entries(competitorsData).map(([category, competitors = []]) => (
