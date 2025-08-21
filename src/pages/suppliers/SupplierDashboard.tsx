@@ -21,10 +21,9 @@ import SupplierTopProductsChart from "../../components/Charts/suppliers/Supplier
 import InventoryTrendChart from "../../components/Charts/suppliers/InventoryTrendChart";
 import "react-datepicker/dist/react-datepicker.css";
 import { API_BASE_URL } from "../../config";
-// @ts-ignore
-import GPT from 'react-gpt';
-import AdBanner from "./AdBanner";
+import GoogleAd from "./GoogleAd";
 import FakeAdBanner from "./fakeAd"
+import Adsense from 'react-adsense';
 interface AuthResponse {
   success: boolean;
   token: string;
@@ -234,15 +233,15 @@ const SupplierDashboard = () => {
             />
           </div>
         </div>
-<GPT
-        adUnitPath="/6355419/Travel/Europe/France/Paris"
-        sizeMapping={[
-            { viewport: [0, 0], slot: [320, 50] },
-            // { viewport: [750, 0], slot: [728, 90] },
-            // { viewport: [1050, 0], slot: [1024, 120] },
-        ]}
-        nativeTemplateId="10101010"
-      />
+<GoogleAd
+  adUnitPath="/6355419/Travel/Europe/France/Paris"
+  sizeMapping={[
+    { viewport: [0, 0], slot: [320, 50] },
+    // { viewport: [750, 0], slot: [728, 90] },
+    // { viewport: [1050, 0], slot: [1024, 120] },
+  ]}
+  nativeTemplateId="10101010"
+/>
         <button
           onClick={handleApplyFilters}
           className="flex items-center justify-center rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-opacity-90"
