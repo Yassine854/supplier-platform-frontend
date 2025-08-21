@@ -21,7 +21,8 @@ import SupplierTopProductsChart from "../../components/Charts/suppliers/Supplier
 import InventoryTrendChart from "../../components/Charts/suppliers/InventoryTrendChart";
 import "react-datepicker/dist/react-datepicker.css";
 import { API_BASE_URL } from "../../config";
-import { Bling as GPT } from "react-gpt";// const supplierId = "27"; // Example supplier ID (e.g., Technofood)
+// @ts-ignore
+import GPT from 'react-gpt';
 import AdBanner from "./AdBanner";
 import FakeAdBanner from "./fakeAd"
 interface AuthResponse {
